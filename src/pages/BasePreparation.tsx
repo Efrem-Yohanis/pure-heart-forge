@@ -438,12 +438,9 @@ export default function BasePreparation() {
   return (
     <div className="w-full space-y-6">
       <div className="w-full">
-        <div>
-          <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-            Base Preparation Dashboard
-          </h1>
-          <p className="text-muted-foreground mt-1">Configure and generate base tables</p>
-        </div>
+        <h1 className="text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">
+          Base Preparation Dashboard
+        </h1>
 
         <div className="space-y-6">
           <Card className="border-2 shadow-elegant">
