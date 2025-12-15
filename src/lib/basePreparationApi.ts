@@ -11,12 +11,13 @@ export interface ApiResponse {
   rows_created?: number;
   message?: string;
   error?: string;
+  account_number?: string;
 }
 
 // Active Customer Table
 export interface ActiveCustomerRequest {
   table_name: string;
-  data_from: string; // "YYYY-MM-DD"
+  data_from: string;
   active_for: number;
 }
 
@@ -35,8 +36,8 @@ export async function createActiveCustomerTable(data: ActiveCustomerRequest): Pr
 // VLR Attached Table
 export interface VlrAttachedRequest {
   table_name: string;
-  day_from: string; // "YYYY-MM-DD"
-  day_to: string;   // "YYYY-MM-DD"
+  day_from: string;
+  day_to: string;
 }
 
 export async function createVlrAttachedTable(data: VlrAttachedRequest): Promise<ApiResponse> {
@@ -74,7 +75,7 @@ export async function createRegisteredMpesaTable(data: RegisteredMpesaRequest): 
 // Targeted Table
 export interface TargetedTableRequest {
   table_name: string;
-  data_from: string; // "YYYY-MM-DD"
+  data_from: string;
   targeted_for_last: number;
 }
 
@@ -110,7 +111,7 @@ export async function createRewardedCustomerTable(data: RewardedCustomerRequest)
   return response.json();
 }
 
-// Create Table From File (FROM INPUT)
+// Create Table From File
 export async function createTableFromFile(
   tableName: string,
   file: File,
@@ -133,7 +134,7 @@ export async function createTableFromFile(
   return response.json();
 }
 
-// Create Table From SQL (for BaseTableBuilder)
+// Create Table From SQL
 export interface SqlTableRequest {
   table_name: string;
   sql: string;
@@ -151,22 +152,106 @@ export async function createTableFromSql(data: SqlTableRequest): Promise<ApiResp
   return response.json();
 }
 
-// GA Customers Table (same as Active Customer)
-export interface GaCustomersRequest {
+// Customer GA Table
+export interface CustomerGaRequest {
   table_name: string;
   data_from: string;
-  active_for?: number;
+  data_to: string;
 }
 
-export async function createGaCustomersTable(data: GaCustomersRequest): Promise<ApiResponse> {
-  const response = await fetch(`${BASE_URL}/create_active_customer_table`, {
+export async function createCustomerGaTable(data: CustomerGaRequest): Promise<ApiResponse> {
+  const response = await fetch(`${BASE_URL}/create_customer_ga`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      table_name: data.table_name,
-      data_from: data.data_from,
-      active_for: data.active_for || 30,
-    }),
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
+
+// Fraud Table
+export interface FraudTableRequest {
+  table_name: string;
+}
+
+export async function createFraudTable(data: FraudTableRequest): Promise<ApiResponse> {
+  const response = await fetch(`${BASE_URL}/create_fraud_table`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
+
+// Staff List Table
+export interface StaffListTableRequest {
+  table_name: string;
+}
+
+export async function createStaffListTable(data: StaffListTableRequest): Promise<ApiResponse> {
+  const response = await fetch(`${BASE_URL}/create_staff_list_table`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
+
+// CBE Top Up Table
+export interface CbeTopupTableRequest {
+  table_name: string;
+  data_from: string;
+  data_to: string;
+}
+
+export async function createCbeTopupTable(data: CbeTopupTableRequest): Promise<ApiResponse> {
+  const response = await fetch(`${BASE_URL}/create_cbe_topup_table`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
+
+// Freared From Table
+export interface FrearedFromTableRequest {
+  table_name: string;
+  account_number: string;
+}
+
+export async function createFrearedFromTable(data: FrearedFromTableRequest): Promise<ApiResponse> {
+  const response = await fetch(`${BASE_URL}/create_freared_from_table`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return response.json();
+}
+
+// Dormant Table
+export interface DormantTableRequest {
+  table_name: string;
+}
+
+export async function createDormantTable(data: DormantTableRequest): Promise<ApiResponse> {
+  const response = await fetch(`${BASE_URL}/create_dormant_table`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
   });
   if (!response.ok) {
     throw new Error(`HTTP error! status: ${response.status}`);
