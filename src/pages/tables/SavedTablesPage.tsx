@@ -1,11 +1,10 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Eye, Trash2, Database } from "lucide-react";
-import { getSavedTables, deleteSavedTable } from "@/lib/savedTables";
+import { Search, Eye, Trash2, Database, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
@@ -15,20 +14,70 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
+const API_BASE_URL = "http://127.0.0.1:5000";
+
+interface GetAllTablesResponse {
+  success: boolean;
+  schema: string;
+  tables: string[];
+  table_count: number;
+}
 
 export default function SavedTablesPage() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [refreshKey, setRefreshKey] = useState(0);
+  const [tables, setTables] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [dropLoading, setDropLoading] = useState(false);
+  const [tableToDelete, setTableToDelete] = useState<string | null>(null);
   const itemsPerPage = 10;
 
-  const tables = useMemo(() => getSavedTables(), [refreshKey]);
+  const fetchTables = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/get_all_tables`);
+      const data: GetAllTablesResponse = await response.json();
+      if (data.success) {
+        setTables(data.tables);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch tables",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching tables:", error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTables();
+  }, []);
 
   const filteredTables = useMemo(() => {
     return tables.filter(table =>
-      table.tableName.toLowerCase().includes(searchQuery.toLowerCase())
+      table.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [tables, searchQuery]);
 
@@ -42,13 +91,42 @@ export default function SavedTablesPage() {
     navigate(`/tables/saved/${encodeURIComponent(tableName)}/view`);
   };
 
-  const handleDropTable = (id: string, tableName: string) => {
-    deleteSavedTable(id);
-    setRefreshKey(prev => prev + 1);
-    toast({
-      title: "Table Dropped",
-      description: `Table ${tableName} has been removed from saved tables.`,
-    });
+  const handleDropTable = async () => {
+    if (!tableToDelete) return;
+    
+    setDropLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/drop_table`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ table_name: tableToDelete }),
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        toast({
+          title: "Table Dropped",
+          description: data.message,
+        });
+        fetchTables();
+      } else {
+        toast({
+          title: "Error",
+          description: data.error || "Failed to drop table",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error dropping table:", error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
+      });
+    } finally {
+      setDropLoading(false);
+      setTableToDelete(null);
+    }
   };
 
   return (
@@ -68,7 +146,7 @@ export default function SavedTablesPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          {/* Search */}
+          {/* Search and Refresh */}
           <div className="flex items-center gap-2 mb-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -82,6 +160,14 @@ export default function SavedTablesPage() {
                 className="pl-9"
               />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={fetchTables}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            </Button>
           </div>
 
           {/* Table */}
@@ -90,34 +176,32 @@ export default function SavedTablesPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Table Name</TableHead>
-                  <TableHead>Created From</TableHead>
-                  <TableHead>Date Created</TableHead>
-                  <TableHead>Columns Used</TableHead>
-                  <TableHead>Row Count</TableHead>
                   <TableHead className="text-right">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedTables.length === 0 ? (
+                {loading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedTables.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
                       No saved tables found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedTables.map((table) => (
-                    <TableRow key={table.id}>
-                      <TableCell className="font-medium">{table.tableName}</TableCell>
-                      <TableCell>{table.createdFrom}</TableCell>
-                      <TableCell>{table.dateCreated}</TableCell>
-                      <TableCell>{table.columns.join(", ")}</TableCell>
-                      <TableCell>{table.rowCount.toLocaleString()}</TableCell>
+                  paginatedTables.map((tableName) => (
+                    <TableRow key={tableName}>
+                      <TableCell className="font-medium">{tableName}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleView(table.tableName)}
+                            onClick={() => handleView(tableName)}
                             className="gap-1"
                           >
                             <Eye className="h-4 w-4" />
@@ -126,11 +210,11 @@ export default function SavedTablesPage() {
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDropTable(table.id, table.tableName)}
+                            onClick={() => setTableToDelete(tableName)}
                             className="gap-1 text-destructive hover:text-destructive"
                           >
                             <Trash2 className="h-4 w-4" />
-                            Drop Table
+                            Drop
                           </Button>
                         </div>
                       </TableCell>
@@ -175,6 +259,28 @@ export default function SavedTablesPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* Drop Confirmation Modal */}
+      <AlertDialog open={!!tableToDelete} onOpenChange={(open) => !open && setTableToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Drop Table</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to drop the table <strong>{tableToDelete}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={dropLoading}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDropTable}
+              disabled={dropLoading}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {dropLoading ? "Dropping..." : "Drop Table"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
