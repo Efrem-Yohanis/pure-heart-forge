@@ -1,11 +1,9 @@
-import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Search, Eye, Trash2, Database } from "lucide-react";
-import { getSchemaTablesList } from "@/lib/savedTables";
+import { Search, Database, RefreshCw } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   Pagination,
@@ -16,18 +14,66 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
+const API_BASE_URL = "http://127.0.0.1:5000";
+
+interface TableData {
+  Table_Name: string;
+  Created_From: string;
+  Date_Created: string;
+  Columns_Used: string;
+  Row_Count: number;
+}
+
+interface ApiResponse {
+  success: boolean;
+  table_name: string;
+  total_records: number;
+  columns: string[];
+  data: TableData[];
+}
+
 export default function MySchemaPage() {
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [tables, setTables] = useState<TableData[]>([]);
+  const [loading, setLoading] = useState(false);
   const itemsPerPage = 10;
 
-  const tables = getSchemaTablesList();
+  const fetchTables = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/get_cvm_portal_data`);
+      const data: ApiResponse = await response.json();
+      if (data.success) {
+        setTables(data.data);
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to fetch tables",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching tables:", error);
+      toast({
+        title: "Error",
+        description: "Failed to connect to server",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTables();
+  }, []);
 
   const filteredTables = useMemo(() => {
     return tables.filter(table =>
-      table.toLowerCase().includes(searchQuery.toLowerCase())
+      table.Table_Name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      table.Created_From.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [tables, searchQuery]);
 
@@ -36,18 +82,6 @@ export default function MySchemaPage() {
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
-
-  const handleView = (tableName: string) => {
-    navigate(`/tables/schema/${encodeURIComponent(tableName)}/view`);
-  };
-
-  const handleDropTable = (tableName: string) => {
-    toast({
-      title: "Drop Table",
-      description: `This would drop table: ${tableName}. Feature requires backend integration.`,
-      variant: "destructive",
-    });
-  };
 
   return (
     <div className="w-full space-y-6">
@@ -66,7 +100,7 @@ export default function MySchemaPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
-          {/* Search */}
+          {/* Search and Refresh */}
           <div className="flex items-center gap-2 mb-4">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -80,6 +114,14 @@ export default function MySchemaPage() {
                 className="pl-9"
               />
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={fetchTables}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            </Button>
           </div>
 
           {/* Table */}
@@ -88,42 +130,35 @@ export default function MySchemaPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Table Name</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead>Created From</TableHead>
+                  <TableHead>Date Created</TableHead>
+                  <TableHead>Columns Used</TableHead>
+                  <TableHead className="text-right">Row Count</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginatedTables.length === 0 ? (
+                {loading ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                      Loading...
+                    </TableCell>
+                  </TableRow>
+                ) : paginatedTables.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                       No tables found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginatedTables.map((tableName) => (
-                    <TableRow key={tableName}>
-                      <TableCell className="font-medium">{tableName}</TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleView(tableName)}
-                            className="gap-1"
-                          >
-                            <Eye className="h-4 w-4" />
-                            View
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDropTable(tableName)}
-                            className="gap-1 text-destructive hover:text-destructive"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Drop Table
-                          </Button>
-                        </div>
+                  paginatedTables.map((table) => (
+                    <TableRow key={table.Table_Name}>
+                      <TableCell className="font-medium">{table.Table_Name}</TableCell>
+                      <TableCell>{table.Created_From}</TableCell>
+                      <TableCell>{table.Date_Created}</TableCell>
+                      <TableCell className="max-w-[200px] truncate" title={table.Columns_Used}>
+                        {table.Columns_Used}
                       </TableCell>
+                      <TableCell className="text-right">{table.Row_Count.toLocaleString()}</TableCell>
                     </TableRow>
                   ))
                 )}
