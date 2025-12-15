@@ -1,4 +1,4 @@
-import { LayoutDashboard, ChevronRight, Database, Headphones, Gavel, Moon, Lock, FileCode2, Table2, FolderOpen, Save, ListTodo } from "lucide-react";
+import { LayoutDashboard, ChevronRight, Database, Headphones, Gavel, FileCode2, Table2, FolderOpen, Save, ListTodo } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
@@ -17,8 +17,6 @@ import {
 
 const opsSupportItems = [
   { title: "Court Issue", url: "/ops-support/court-issue", icon: Gavel },
-  { title: "Dormant List", url: "/ops-support/dormant-list", icon: Moon },
-  { title: "Pinlock", url: "/ops-support/pinlock", icon: Lock },
 ];
 
 const tablesItems = [
