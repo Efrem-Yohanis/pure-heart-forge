@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Users, Clock, Target, Gift, CreditCard, X, Wallet, Building, Upload, Moon } from "lucide-react";
-import { BaseTableBuilder } from "@/components/base-preparation/BaseTableBuilder";
+
 import { useToast } from "@/hooks/use-toast";
 import {
   createActiveCustomerTable,
@@ -547,12 +547,6 @@ export default function BasePreparation() {
             </div>
           )}
 
-          {selectedTables.length > 0 && (
-            <BaseTableBuilder 
-              availableTables={selectedTables.map(t => t.values.table_name || t.label.replace(/ /g, "_"))}
-              postfix=""
-            />
-          )}
 
           {isGenerating && (
             <Card className="border-2 shadow-elegant animate-fade-in">
