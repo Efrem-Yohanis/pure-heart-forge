@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Users, Clock, Target, Gift, CreditCard, X, Wallet, Building, Upload, Moon } from "lucide-react";
-
+import { BaseTableBuilder } from "@/components/base-preparation/BaseTableBuilder";
 import { useToast } from "@/hooks/use-toast";
 import {
   createActiveCustomerTable,
@@ -26,7 +26,7 @@ import {
 
 interface TableFieldConfig {
   name: string;
-  type: "text" | "file" | "date" | "number";
+  type: "text" | "file";
   label: string;
   required: boolean;
   placeholder?: string;
@@ -69,8 +69,6 @@ const availableTables: { id: string; label: string; icon: any; borderColor: stri
     borderColor: "border-l-emerald-500",
     fields: [
       { name: "table_name", type: "text", label: "Table Name", required: true, placeholder: "e.g., ga_customers_table" },
-      { name: "data_from", type: "date", label: "Data From", required: true },
-      { name: "active_for", type: "number", label: "Active For (days)", required: true, placeholder: "e.g., 30" },
     ]
   },
   { 
@@ -98,8 +96,6 @@ const availableTables: { id: string; label: string; icon: any; borderColor: stri
     borderColor: "border-l-green-500",
     fields: [
       { name: "table_name", type: "text", label: "Table Name", required: true, placeholder: "e.g., active_customers" },
-      { name: "data_from", type: "date", label: "Data From", required: true },
-      { name: "active_for", type: "number", label: "Active For (days)", required: true, placeholder: "e.g., 30" },
     ]
   },
   { 
@@ -226,15 +222,18 @@ export default function BasePreparation() {
       case "active_customers":
         return createActiveCustomerTable({
           table_name: tableName,
-          data_from: table.values.data_from || new Date().toISOString().split('T')[0],
-          active_for: parseInt(table.values.active_for) || 30,
+          data_from: new Date().toISOString().split('T')[0],
+          active_for: 30,
         });
 
       case "ga_customers":
+        const today = new Date();
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
         return createCustomerGaTable({
           table_name: tableName,
-          data_from: table.values.data_from || new Date().toISOString().split('T')[0],
-          active_for: parseInt(table.values.active_for) || 30,
+          data_from: yesterday.toISOString().split('T')[0],
+          data_to: today.toISOString().split('T')[0],
         });
 
       case "vlr_attached_customers": {
@@ -413,25 +412,6 @@ export default function BasePreparation() {
             disabled={isGenerating}
           />
         );
-      case "date":
-        return (
-          <Input 
-            type="date" 
-            value={value} 
-            onChange={(e) => updateTableField(table.instanceId, field.name, e.target.value)}
-            disabled={isGenerating}
-          />
-        );
-      case "number":
-        return (
-          <Input 
-            type="number" 
-            value={value} 
-            onChange={(e) => updateTableField(table.instanceId, field.name, e.target.value)}
-            placeholder={field.placeholder}
-            disabled={isGenerating}
-          />
-        );
       case "file":
         return (
           <Input 
@@ -535,7 +515,24 @@ export default function BasePreparation() {
             </div>
           )}
 
+          {selectedTables.length > 0 && (
+            <div className="flex justify-end">
+              <Button 
+                onClick={handleGenerate} 
+                disabled={isGenerating}
+                size="lg"
+              >
+                {isGenerating ? "Generating..." : "Generate Tables"}
+              </Button>
+            </div>
+          )}
 
+          {selectedTables.length > 0 && (
+            <BaseTableBuilder 
+              availableTables={selectedTables.map(t => t.values.table_name || t.label.replace(/ /g, "_"))}
+              postfix=""
+            />
+          )}
 
           {isGenerating && (
             <Card className="border-2 shadow-elegant animate-fade-in">
