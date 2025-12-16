@@ -12,9 +12,8 @@ import { getSQLQueryById, updateSQLQuery, deleteSQLQuery, type SQLQueryFromApi }
 
 // SQL syntax highlighting
 const highlightSQL = (sql: string) => {
-  const keywords = /\b(SELECT|FROM|WHERE|AND|OR|ORDER BY|GROUP BY|HAVING|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AS|DISTINCT|COUNT|SUM|AVG|MIN|MAX|TRUNC|SUBSTR|WITH|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|INDEX|TABLE|VIEW|LEVEL|CONNECT BY|DUAL|SYSDATE)\b/gi;
+  const keywords = /\b(SELECT|FROM|WHERE|AND|OR|ORDER BY|GROUP BY|HAVING|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AS|DISTINCT|COUNT|SUM|AVG|MIN|MAX|TRUNC|SUBSTR|WITH|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|INDEX|TABLE|VIEW|LEVEL|CONNECT BY|DUAL|SYSDATE|PARTITION BY|ROW_NUMBER|OVER|DESC|ASC)\b/gi;
   const strings = /('[^']*')/g;
-  const numbers = /\b(\d+\.?\d*)\b/g;
   const comments = /(--.*$|\/\*[\s\S]*?\*\/)/gm;
   
   let highlighted = sql
@@ -23,9 +22,8 @@ const highlightSQL = (sql: string) => {
     .replace(/>/g, '&gt;');
   
   highlighted = highlighted.replace(comments, '<span class="text-muted-foreground italic">$1</span>');
-  highlighted = highlighted.replace(strings, '<span class="text-green-500">$1</span>');
-  highlighted = highlighted.replace(keywords, '<span class="text-blue-500 font-semibold">$1</span>');
-  highlighted = highlighted.replace(numbers, '<span class="text-amber-500">$1</span>');
+  highlighted = highlighted.replace(strings, '<span class="text-green-400">$1</span>');
+  highlighted = highlighted.replace(keywords, '<span class="text-primary font-semibold">$1</span>');
   
   return highlighted;
 };
