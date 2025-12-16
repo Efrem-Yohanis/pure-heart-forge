@@ -535,17 +535,6 @@ export default function BasePreparation() {
             </div>
           )}
 
-          {selectedTables.length > 0 && (
-            <div className="flex justify-end">
-              <Button 
-                onClick={handleGenerate} 
-                disabled={isGenerating}
-                size="lg"
-              >
-                {isGenerating ? "Generating..." : "Generate Tables"}
-              </Button>
-            </div>
-          )}
 
 
           {isGenerating && (
