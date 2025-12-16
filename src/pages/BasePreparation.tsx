@@ -26,7 +26,7 @@ import {
 
 interface TableFieldConfig {
   name: string;
-  type: "text" | "file";
+  type: "text" | "file" | "date" | "number";
   label: string;
   required: boolean;
   placeholder?: string;
@@ -69,6 +69,8 @@ const availableTables: { id: string; label: string; icon: any; borderColor: stri
     borderColor: "border-l-emerald-500",
     fields: [
       { name: "table_name", type: "text", label: "Table Name", required: true, placeholder: "e.g., ga_customers_table" },
+      { name: "data_from", type: "date", label: "Data From", required: true },
+      { name: "active_for", type: "number", label: "Active For (days)", required: true, placeholder: "e.g., 30" },
     ]
   },
   { 
@@ -96,6 +98,8 @@ const availableTables: { id: string; label: string; icon: any; borderColor: stri
     borderColor: "border-l-green-500",
     fields: [
       { name: "table_name", type: "text", label: "Table Name", required: true, placeholder: "e.g., active_customers" },
+      { name: "data_from", type: "date", label: "Data From", required: true },
+      { name: "active_for", type: "number", label: "Active For (days)", required: true, placeholder: "e.g., 30" },
     ]
   },
   { 
@@ -222,18 +226,15 @@ export default function BasePreparation() {
       case "active_customers":
         return createActiveCustomerTable({
           table_name: tableName,
-          data_from: new Date().toISOString().split('T')[0],
-          active_for: 30,
+          data_from: table.values.data_from || new Date().toISOString().split('T')[0],
+          active_for: parseInt(table.values.active_for) || 30,
         });
 
       case "ga_customers":
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
         return createCustomerGaTable({
           table_name: tableName,
-          data_from: yesterday.toISOString().split('T')[0],
-          data_to: today.toISOString().split('T')[0],
+          data_from: table.values.data_from || new Date().toISOString().split('T')[0],
+          active_for: parseInt(table.values.active_for) || 30,
         });
 
       case "vlr_attached_customers": {
@@ -406,6 +407,25 @@ export default function BasePreparation() {
         return (
           <Input 
             type="text" 
+            value={value} 
+            onChange={(e) => updateTableField(table.instanceId, field.name, e.target.value)}
+            placeholder={field.placeholder}
+            disabled={isGenerating}
+          />
+        );
+      case "date":
+        return (
+          <Input 
+            type="date" 
+            value={value} 
+            onChange={(e) => updateTableField(table.instanceId, field.name, e.target.value)}
+            disabled={isGenerating}
+          />
+        );
+      case "number":
+        return (
+          <Input 
+            type="number" 
             value={value} 
             onChange={(e) => updateTableField(table.instanceId, field.name, e.target.value)}
             placeholder={field.placeholder}

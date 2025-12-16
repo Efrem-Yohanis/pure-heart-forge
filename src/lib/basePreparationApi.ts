@@ -156,7 +156,7 @@ export async function createTableFromSql(data: SqlTableRequest): Promise<ApiResp
 export interface CustomerGaRequest {
   table_name: string;
   data_from: string;
-  data_to: string;
+  active_for: number;
 }
 
 export async function createCustomerGaTable(data: CustomerGaRequest): Promise<ApiResponse> {
