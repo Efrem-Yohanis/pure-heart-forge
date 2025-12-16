@@ -54,7 +54,21 @@ export async function getTasks(params?: { task_id?: number; status?: string }): 
   if (!response.ok) {
     throw new Error("Failed to fetch tasks");
   }
-  return response.json();
+  const json = await response.json();
+  
+  // Map uppercase API fields to lowercase frontend fields
+  return {
+    ...json,
+    data: json.data?.map((task: any) => ({
+      task_id: task.TASK_ID,
+      task_name: task.TASK_NAME,
+      date_submitted: task.DATE_SUBMITTED,
+      date_completed: task.DATE_COMPLETED,
+      status: task.STATUS,
+      created_date: task.CREATED_DATE,
+      last_updated: task.LAST_UPDATED,
+    })) || [],
+  };
 }
 
 export async function addTask(task_name: string): Promise<AddTaskResponse> {
