@@ -527,19 +527,13 @@ export default function BasePreparation() {
             </div>
           )}
 
-          {selectedTables.length > 0 && (
-            <BaseTableBuilder 
-              availableTables={selectedTables.map(t => t.values.table_name || t.label.replace(/ /g, "_"))}
-              postfix=""
-            />
-          )}
-
-          {isGenerating && (
+          {/* Table Creation Tracking Card - Shows when there are tableStatuses */}
+          {tableStatuses.length > 0 && (
             <Card className="border-2 shadow-elegant animate-fade-in">
               <CardHeader className="border-b bg-gradient-to-r from-blue-500/5 to-transparent">
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
-                    📊 PROGRESS TRACKING
+                    📊 TABLE CREATION TRACKING
                   </CardTitle>
                   <Badge variant="outline" className="text-base">
                     {completedTables}/{tableStatuses.length} Tables
@@ -552,23 +546,21 @@ export default function BasePreparation() {
                     <CardContent className="pt-4">
                       <p className="text-sm text-muted-foreground">Overall Status</p>
                       <p className="text-lg font-semibold mt-1">
-                        {completedTables === tableStatuses.length ? "🟢 Complete" : "🟡 Running"}
+                        {completedTables === tableStatuses.length && !isGenerating ? "🟢 Complete" : "🟡 Running"}
                       </p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-4">
-                      <p className="text-sm text-muted-foreground">Elapsed Time</p>
-                      <p className="text-lg font-semibold mt-1">{Math.floor((Date.now() - startTime) / 1000)}s</p>
+                      <p className="text-sm text-muted-foreground">Completed</p>
+                      <p className="text-lg font-semibold mt-1">{completedTables} tables</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-4">
-                      <p className="text-sm text-muted-foreground">Total Execution</p>
+                      <p className="text-sm text-muted-foreground">Pending/Error</p>
                       <p className="text-lg font-semibold mt-1">
-                        {completedTables === tableStatuses.length 
-                          ? `${Math.floor((Date.now() - startTime) / 1000)}s` 
-                          : "-"}
+                        {tableStatuses.length - completedTables} tables
                       </p>
                     </CardContent>
                   </Card>
@@ -581,7 +573,19 @@ export default function BasePreparation() {
                         <div className="flex items-center justify-between gap-4">
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">{table.name}</p>
-                            <p className="text-xs text-muted-foreground mt-1">{table.parameters}</p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-muted-foreground">{table.parameters}</p>
+                              {table.columns && table.columns.length > 0 && (
+                                <p className="text-xs text-primary">
+                                  Columns: {table.columns.join(", ")}
+                                </p>
+                              )}
+                              {table.rowCount && (
+                                <p className="text-xs text-emerald-500">
+                                  Rows: {table.rowCount.toLocaleString()}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <div className="flex items-center gap-3">
                             {getStatusBadge(table.status)}
@@ -589,6 +593,7 @@ export default function BasePreparation() {
                               {table.status === "completed" && `${table.time}s`}
                               {table.status === "running" && `${table.time}s...`}
                               {table.status === "pending" && "-"}
+                              {table.status === "error" && "Error"}
                             </p>
                           </div>
                         </div>
@@ -598,6 +603,22 @@ export default function BasePreparation() {
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* BASE TABLE BUILDER - Only shows when there are completed tables */}
+          {completedTables > 0 && (
+            <BaseTableBuilder 
+              availableTables={tableStatuses
+                .filter(t => t.status === "completed")
+                .map(t => t.name)}
+              tableColumns={tableStatuses
+                .filter(t => t.status === "completed" && t.columns)
+                .reduce((acc, t) => {
+                  acc[t.name] = t.columns || [];
+                  return acc;
+                }, {} as Record<string, string[]>)}
+              postfix=""
+            />
           )}
         </div>
       </div>
