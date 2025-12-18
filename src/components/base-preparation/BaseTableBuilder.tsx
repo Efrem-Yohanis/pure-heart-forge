@@ -32,13 +32,12 @@ interface TableCreationStatus {
 
 interface BaseTableBuilderProps {
   availableTables: string[];
-  tableColumns: Record<string, string[]>;
   postfix: string;
 }
 
 const ALIAS_LETTERS = "abcdefghijklmnopqrstuvwxyz".split("");
 
-export function BaseTableBuilder({ availableTables, tableColumns, postfix }: BaseTableBuilderProps) {
+export function BaseTableBuilder({ availableTables, postfix }: BaseTableBuilderProps) {
   const { toast } = useToast();
   const navigate = useNavigate();
   
@@ -49,21 +48,6 @@ export function BaseTableBuilder({ availableTables, tableColumns, postfix }: Bas
   const [isEdited, setIsEdited] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [tableStatuses, setTableStatuses] = useState<TableCreationStatus[]>([]);
-
-  // Get all unique columns from all tables
-  const getAllAvailableColumns = () => {
-    const allColumns = new Set<string>();
-    Object.values(tableColumns).forEach(cols => {
-      cols.forEach(col => allColumns.add(col));
-    });
-    // Add default columns if no columns available
-    if (allColumns.size === 0) {
-      allColumns.add("MSISDN");
-      allColumns.add("CUSTOMER_ID");
-      allColumns.add("ACCOUNT_ID");
-    }
-    return Array.from(allColumns);
-  };
 
   const getNextAlias = () => {
     return ALIAS_LETTERS[sourceTables.length] || `t${sourceTables.length + 1}`;
@@ -316,9 +300,9 @@ ${conditions}
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="bg-background z-50">
-                  {getAllAvailableColumns().map(col => (
-                    <SelectItem key={col} value={col}>{col}</SelectItem>
-                  ))}
+                  <SelectItem value="MSISDN">MSISDN</SelectItem>
+                  <SelectItem value="CUSTOMER_ID">CUSTOMER_ID</SelectItem>
+                  <SelectItem value="ACCOUNT_ID">ACCOUNT_ID</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -362,16 +346,7 @@ ${conditions}
                         {availableTables
                           .filter(t => t === table.tableName || !sourceTables.some(st => st.tableName === t))
                           .map(t => (
-                            <SelectItem key={t} value={t}>
-                              <div className="flex flex-col">
-                                <span>{t}</span>
-                                {tableColumns[t] && (
-                                  <span className="text-xs text-muted-foreground">
-                                    ({tableColumns[t].length} columns)
-                                  </span>
-                                )}
-                              </div>
-                            </SelectItem>
+                            <SelectItem key={t} value={t}>{t}</SelectItem>
                           ))}
                       </SelectContent>
                     </Select>
@@ -393,13 +368,13 @@ ${conditions}
                       value={table.column} 
                       onValueChange={(val) => updateSourceTable(table.id, "column", val)}
                     >
-                      <SelectTrigger className="w-[140px] bg-background">
+                      <SelectTrigger className="w-[120px] bg-background">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="bg-background z-50">
-                        {(tableColumns[table.tableName] || getAllAvailableColumns()).map(col => (
-                          <SelectItem key={col} value={col}>{col}</SelectItem>
-                        ))}
+                        <SelectItem value="MSISDN">MSISDN</SelectItem>
+                        <SelectItem value="CUSTOMER_ID">CUSTOMER_ID</SelectItem>
+                        <SelectItem value="ACCOUNT_ID">ACCOUNT_ID</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button 
