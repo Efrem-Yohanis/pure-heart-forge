@@ -9,7 +9,6 @@ import {
   UserCircle,
   Wallet,
   Plug,
-  Settings,
   ChevronLeft,
   ChevronRight,
   LogOut,
@@ -24,10 +23,9 @@ const navigationItems = [
   { name: "AI Insights", href: "/ai-insights", icon: Brain },
   { name: "Campaigns", href: "/campaigns", icon: Megaphone },
   { name: "Reports", href: "/reports", icon: BarChart3 },
-  { name: "Customer 360°", href: "/customer-360", icon: UserCircle },
-  { name: "Reward Account Management", href: "/reward-accounts", icon: Wallet },
-  { name: "Integrations", href: "/integrations", icon: Plug },
-  { name: "Admin / Settings", href: "/admin", icon: Settings },
+  { name: "Customer", href: "/customer-360", icon: UserCircle },
+  { name: "Reward Account", href: "/reward-accounts", icon: Wallet },
+  { name: "Configuration", href: "/configuration", icon: Plug },
 ];
 
 export function AppSidebar() {
