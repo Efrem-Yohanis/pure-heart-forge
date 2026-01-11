@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, FileText, Clock, Mail, Calendar, Download, Play, Database, Filter, Code } from "lucide-react";
+import { ArrowLeft, FileText, Clock, Mail, Calendar, Play, Database, Filter, Code, Pencil, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -65,9 +65,9 @@ export default function ReportDetail() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2 rounded-none">
-            <Download className="w-4 h-4" />
-            Download
+          <Button variant="outline" className="gap-2 rounded-none" onClick={() => navigate(`/reports/${id}/edit`)}>
+            <Pencil className="w-4 h-4" />
+            Edit Report
           </Button>
           <Button className="gap-2 rounded-none">
             <Play className="w-4 h-4" />
